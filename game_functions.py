@@ -1,5 +1,6 @@
 import sys
 from time import sleep
+import os
 
 import pygame
 
@@ -7,7 +8,7 @@ from bullet import Bullet
 from alien import Alien
 
 
-def check_keydown_events(event, ai_settings, screen, ship, bullets):
+def check_keydown_events(event, ai_settings, screen, ship, bullets, stats, sb):
     """Responds to key presses."""
     if event.key == pygame.K_RIGHT:
         ship.moving_right = True
@@ -16,6 +17,7 @@ def check_keydown_events(event, ai_settings, screen, ship, bullets):
     elif event.key == pygame.K_SPACE:
         fire_bullet(ai_settings, screen, ship, bullets)
     elif event.key == pygame.K_q:
+        save_record(stats, sb)
         sys.exit()
 
 
@@ -38,17 +40,18 @@ def check_events(ai_settings, screen, stats, sb, play_button, ship, aliens, bull
     """Handles key presses and mouse events."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            save_record(stats, sb)
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             check_play_button(ai_settings, screen, stats, sb, play_button,
                               ship, aliens, bullets, mouse_x, mouse_y)
         elif event.type == pygame.KEYDOWN:
-            check_keydown_events(event, ai_settings, screen, ship, bullets)
+            check_keydown_events(event, ai_settings, screen, ship, bullets, stats, sb)
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
         elif event.type == pygame.KEYDOWN:
-            check_keydown_events(event, ai_settings, screen, ship, bullets)
+            check_keydown_events(event, ai_settings, screen, ship, bullets, stats, sb)
 
 
 def check_play_button(ai_settings, screen, stats, sb, play_button, ship, aliens, bullets,
@@ -216,6 +219,7 @@ def ship_hit(ai_settings, stats, sb, screen, ship, aliens, bullets):
         sleep(0.5)
 
     else:
+        save_record(stats, sb)
         stats.game_active = False
         pygame.mouse.set_visible(True)
 
@@ -252,3 +256,21 @@ def check_high_score(stats, sb):
     if stats.score > stats.high_score:
         stats.high_score = stats.score
         sb.prep_high_score()
+
+
+def save_record(stats, sb):
+    """Saves the game record to a file and updates it."""
+    file_name = 'record.txt'
+    record = str(stats.high_score)
+    if os.stat('record.txt').st_size == 0:
+        file = open(file_name, 'w+')
+        file.write(record)
+        file.close()
+    else:
+        file = open(file_name, 'r')
+        rec = file.read()
+        file.close()
+        if int(record) > int(rec):
+            file = open(file_name, 'w')
+            file.write(record)
+            file.close()
